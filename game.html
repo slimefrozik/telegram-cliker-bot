@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кликер</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>💰 <span id="coins">0</span> монет</h1>
+        
+        <button id="click-btn">Клик! (+<span id="click-power">1</span>)</button>
+        
+        <div class="upgrades">
+            <h2>🔧 Прокачка</h2>
+            <button class="upgrade-btn" data-type="click">
+                Сила клика: <span id="click-level">1</span><br>
+                Цена: <span id="click-price">10</span>
+            </button>
+            <button class="upgrade-btn" data-type="auto">
+                Автодоход: <span id="auto-level">0</span>/сек<br>
+                Цена: <span id="auto-price">50</span>
+            </button>
+        </div>
+    </div>
+    <script src="static/game.js"></script>
+</body>
+</html>
