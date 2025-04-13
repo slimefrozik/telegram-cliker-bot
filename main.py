@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 import sqlite3, os
 from dotenv import load_dotenv
+from aiogram.fsm.context import FSMContext
 
 load_dotenv()
 bot = Bot(token=os.getenv("BOT_TOKEN"))
