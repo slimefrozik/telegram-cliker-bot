@@ -25,7 +25,7 @@ async def start(message: types.Message):
     cursor.execute("INSERT OR IGNORE INTO users (user_id) VALUES (?)", (user_id,))
     conn.commit()
     
-    web_app = types.WebAppInfo(url="https://your-site.com/game.html")
+    web_app = types.WebAppInfo(url="https://slimefrozik.github.io/telegram-cliker-bot/")
     keyboard = types.ReplyKeyboardMarkup(keyboard=[
         [types.KeyboardButton("🎮 Открыть игру", web_app=web_app)],
         [types.KeyboardButton("🏆 Лидеры"), types.KeyboardButton("💸 Передать монеты")]
