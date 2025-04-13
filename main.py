@@ -1,16 +1,22 @@
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-import sqlite3, os
-from dotenv import load_dotenv
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+import sqlite3, os, json
+from dotenv import load_dotenv
+from aiogram import F
 
 load_dotenv()
+
+class TransferStates(StatesGroup):
+    wait_transfer = State()
+
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 conn = sqlite3.connect('game.db')
 cursor = conn.cursor()
 
-# Создаём БД
+# Инициализация БД
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY,
     coins DECIMAL(10,2) DEFAULT 0,
@@ -26,10 +32,14 @@ async def start(message: types.Message):
     conn.commit()
     
     web_app = types.WebAppInfo(url="https://slimefrozik.github.io/telegram-cliker-bot/")
-    keyboard = types.ReplyKeyboardMarkup(keyboard=[
-        [types.KeyboardButton("🎮 Открыть игру", web_app=web_app)],
-        [types.KeyboardButton("🏆 Лидеры"), types.KeyboardButton("💸 Передать монеты")]
-    ], resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text="🎮 Открыть игру", web_app=web_app)],
+            [types.KeyboardButton(text="🏆 Лидеры"), 
+             types.KeyboardButton(text="💸 Передать монеты")]
+        ],
+        resize_keyboard=True
+    )
     
     await message.answer("Добро пожаловать в кликер!", reply_markup=keyboard)
 
@@ -47,9 +57,9 @@ async def show_leaders(message: types.Message):
 @dp.message(F.text == "💸 Передать монеты")
 async def start_transfer(message: types.Message, state: FSMContext):
     await message.answer("Введите ID получателя и сумму (например: 123456 50)")
-    await state.set_state("wait_transfer")
+    await state.set_state(TransferStates.wait_transfer)
 
-@dp.message(F.text.regexp(r'^\d+\s+\d+$'), F.state == "wait_transfer")
+@dp.message(F.text.regexp(r'^\d+\s+\d+$'), TransferStates.wait_transfer)
 async def process_transfer(message: types.Message, state: FSMContext):
     sender_id = message.from_user.id
     receiver_id, amount = map(int, message.text.split())
@@ -58,7 +68,7 @@ async def process_transfer(message: types.Message, state: FSMContext):
     sender_coins = cursor.fetchone()[0]
     
     if sender_coins >= amount:
-        commission = int(amount * 0.09)  # Комиссия 9%
+        commission = int(amount * 0.09)
         received = amount - commission
         
         cursor.execute("UPDATE users SET coins=coins-? WHERE user_id=?", (amount, sender_id))
@@ -73,23 +83,6 @@ async def process_transfer(message: types.Message, state: FSMContext):
         await message.answer("❌ Недостаточно монет")
     
     await state.clear()
-
-@dp.message()
-async def handle_web_app_data(message: types.Message):
-    if message.web_app_data:
-        data = json.loads(message.web_app_data.data)
-        user_id = message.from_user.id
-        
-        # Обновляем данные в БД
-        cursor.execute('''UPDATE users SET 
-                      coins=coins+?, 
-                      click_power=click_power+?,
-                      auto_income=auto_income+?
-                      WHERE user_id=?''',
-                   (data['coins'], data['click_power'], data['auto_income'], user_id))
-        conn.commit()
-        
-        await message.answer(f"Прогресс сохранён! Монет: {data['coins']}")
 
 if __name__ == "__main__":
     dp.run_polling(bot)
